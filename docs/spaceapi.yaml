@@ -1,0 +1,484 @@
+openapi: 3.0.3
+info:
+  title: Celestial API
+  version: 1.0.0
+  description: API for exploring planets and managing space favorites
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local Development
+  - url: https://your-render-url.onrender.com/api
+    description: Live API
+
+tags:
+  - name: Auth
+    description: User registration and login
+  - name: CelestialBodies
+    description: Operations for planets and moons
+  - name: Favorites
+    description: User-specific favorite space objects
+  - name: Resources
+    description: Educational resources related to celestial bodies
+  - name: User
+    description: User deletion
+
+paths:
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthSignup'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              example:
+                error: "User already exists"
+              
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login to get JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLogin'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login successful"
+                  token:
+                    type: string
+                    example: "eyJHbGci0iJIUZI1..."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user info
+      description: Returns the profile of the user currently logged in based on the JWT token.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{id}:
+    delete:
+      tags: [User]
+      summary: Delete a user (Admin Only)
+      description: Permanently removes a user and all their associated favorites.
+      security:
+        - bearerAuth: []
+      parameters: 
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /celestial-bodies:
+    get:
+      tags: [CelestialBodies]
+      summary: Retrieve all celestial bodies
+      description: Returns a list of all planets, moons, and stars in the database.
+      responses:
+        '200':
+          description: A list of celestial bodies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CelestialBody'
+    post:
+      tags: [CelestialBodies]
+      summary: Add a new celestial body
+      description: Admin access required. Creates a new entry in the celestial catalog.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CelestialBody'
+      responses:
+        '201':
+          description: Created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CelestialBody'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /celestial-bodies/{id}:
+    get:
+      tags: [CelestialBodies]
+      summary: Get a specific body by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique ID of the celestial body
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Details of the requested body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CelestialBody'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [CelestialBodies]
+      summary: Update an existing celestial body
+      description: Admin access required. Update details like distance or description.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CelestialBody'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CelestialBody'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [CelestialBodies]
+      summary: Delete a celestial body
+      description: Admin access required. Permanently removes the body from the database.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted successfully (No Content)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /resources:
+    get:
+      tags: [Resources]
+      summary: Get all educational resources
+      responses:
+        '200':
+          description: A list of resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+    post:
+      tags: [Resources]
+      summary: Create a new resource (Admin Only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resource'
+      responses:
+        '201':
+          description: Created successfully
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /resources/{id}:
+    get:
+      tags: [Resources]
+      summary: Get a specific resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+    put:
+      tags: [Resources]
+      summary: Update a resource (Admin Only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Resource'
+      responses:
+        '200':
+          description: Updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Resources]
+      summary: Delete a resource (Admin Only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /favorites:
+    get:
+      tags: [Favorites]
+      summary: Get current user's favorites
+      description: Returns only the favorites belonging to the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of favorites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Favorite'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Favorites]
+      summary: Add an item to favorites
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                celestialBodyId: { type: integer, example: 1 }
+                resourceId: { type: integer, example: null }
+              oneOf:
+                - required: [celestialBodyId]
+                - required: [resourceId]
+      responses:
+        '201':
+          description: Added to favorites
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /favorites/{id}:
+    delete:
+      tags: [Favorites]
+      summary: Remove an item from favorites
+      description: Users can only delete their own favorites.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Removed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User: 
+      type: object
+      properties:
+        id: { type: integer, readOnly: true }
+        username: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [USER, ADMIN] }
+    
+    AuthSignup:
+      type: object
+      required: [username, email, password]
+      properties:
+        username: { type: string, example: "spaceboy" }
+        email: { type: string, example: "john@spaceboy.com" }
+        password: { type: string, example: "newpassword123" }
+
+    AuthLogin:
+      type: object 
+      required: [email, password]
+      properties:
+        email: { type: string, example: "john@spaceboy.com" }
+        password: { type: string, example: "newpassword123" }
+
+    CelestialBody:
+      type: object
+      required: [name, type, description, distance]
+      properties:
+        id: { type: integer, readOnly: true }
+        name: { type: string, example: "Mars" }
+        type: { type: string, example: "Planet" }
+        description: { type: string, example: "The Red Planet" }
+        distance: { type: number, format: float, example: 227.9 }
+        imageUrl: { type: string, example: "https://example.com/mars.jpg" }
+
+    Resource: 
+      type: object
+      required: [title, type]
+      properties: 
+        id: { type: integer, readOnly: true }
+        title: { type: string, example: "Mars Rover Photos" }
+        type: { type: string, example: "Article" }
+        url: { type: string, example: "https://nasa.gov/mars" }
+        celestialBodyId: { type: integer, example: 1 }
+    
+    Favorite:
+      type: object
+      properties:
+        id: { type: integer, readOnly: true }
+        userId: { type: integer }
+        celestialBodyId: { type: integer, nullable: true }
+        resourceId: { type: integer, nullable: true }
+        createdAt: { type: string, format: date-time }
+      oneOf:
+        - required: [celestialBodyId]
+        - required: [resourceId]
+
+  responses:
+    BadRequest:
+      description: Invalid input data
+      content:
+        application/json:
+          example:
+            error: "Invalid data provided"
+    Unauthorized:
+      description: Token missing or invalid
+      content:
+        application/json:
+          example:
+            message: "Not authenticated, No token provided"
+    Forbidden:
+      description: Access denied - Admin only
+      content:
+        application/json:
+          example:
+            message: "Forbidden: Admin access only"
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          example:
+            error: "Not Found"
