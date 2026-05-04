@@ -7,7 +7,7 @@ info:
 servers:
   - url: http://localhost:8080/api
     description: Local Development
-  - url: https://your-render-url.onrender.com/api
+  - url: https://spaceapi-f3of.onrender.com/api
     description: Live API
 
 tags:
