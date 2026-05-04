@@ -5,10 +5,10 @@ info:
   description: API for exploring planets and managing space favorites
 
 servers:
-  - url: http://localhost:8080/api
-    description: Local Development
   - url: https://spaceapi-f3of.onrender.com/api
     description: Live API
+  - url: http://localhost:8080/api
+    description: Local Development
 
 tags:
   - name: Auth
