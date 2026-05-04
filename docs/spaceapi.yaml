@@ -4,6 +4,9 @@ info:
   version: 1.0.0
   description: API for exploring planets and managing space favorites
 
+security:
+  - bearerAuth: []
+
 servers:
   - url: https://spaceapi-f3of.onrender.com/api
     description: Live API
